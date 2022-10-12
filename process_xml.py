@@ -12,6 +12,12 @@ import click
 import numpy as np
 import spiir  # quite slow to import?
 
+# Here detector code is for old version of LAL(6.49.0), see:
+# /fred/oz016/opt-pipe/include/lal/LALDetectors.h
+# Be careful when chenge to new version - the code is different, see:
+# https://lscsoft.docs.ligo.org/lalsuite/lal/_l_a_l_detectors_8h_source.html#l00168
+LAL_IFO_MAP = {'L1': 5, 'H1': 4, 'V1':1, 'K1': 16, 'I1': 17}
+
 
 @click.command
 @click.argument("xml", type=str) # default="data/coinc_xml/H1L1V1_1187008882_3_806.xml"
@@ -49,15 +55,8 @@ def main(xml: str, out: str = "data"):
     # trigger_time, ndet,    detcode1, ..., detcodeN,    max_snr1, ..., max_snrN,    sigma1, ..., sigmaN
     # 1+1+N+N+N = 3N+2 elements
     event_info = np.array([trigger_time, ndet])
-
-    # Here detector code is for old version of LAL(6.49.0), see:
-    # /fred/oz016/opt-pipe/include/lal/LALDetectors.h
-    # Be careful when chenge to new version - the code is different, see:
-    # https://lscsoft.docs.ligo.org/lalsuite/lal/_l_a_l_detectors_8h_source.html#l00168
-    lal_det_code = {'L1': 5, 'H1': 4, 'V1':1, 'K1': 16, 'I1': 17}  
-    det_code_array = np.array([])
     for det in det_names:
-        event_info = np.append(event_info, lal_det_code[det])
+        event_info = np.append(event_info, LAL_IFO_MAP[det])
     event_info = np.append(event_info, max_snr_array)
     event_info = np.append(event_info, sigma_array)
     np.savetxt(out_path / 'event_info', event_info)
@@ -68,7 +67,7 @@ def main(xml: str, out: str = "data"):
         real_snr = np.real(xmlfile['snrs'][det])
         imag_snr = np.imag(xmlfile['snrs'][det])
         snr_to_save = np.array([timestamps[det], real_snr, imag_snr]).T 
-        np.savetxt(out_path / "snr_data" / f"snr_det{lal_det_code[det]}", snr_to_save)
+        np.savetxt(out_path / "snr_data" / f"snr_det{LAL_IFO_MAP[det]}", snr_to_save)
 
     print(f'Trigger time: {trigger_time}')
     print(f'Detectors: {det_names}')
