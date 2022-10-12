@@ -45,15 +45,6 @@ def main(xml: str, out: str = "data"):
     trigger_time = xmlfile["tables"]["postcoh"]["end_time"].item()
     trigger_time += xmlfile["tables"]["postcoh"]["end_time_ns"].item() * 1e-9
 
-    # Is trigger time stored in xml file?
-    timestamps = {det: xmlfile["snrs"][det].index.values for det in det_names}
-    # timestamp = xmlfile['snrs'][det].index.to_numpy()
-    # snr_timeseries_dict = xmlfile['snrs']
-    # netsnr_timeseries = sum([abs(snr_timeseries_dict[det]) ** 2 for det in det_names])
-    
-    # trigger_time = timestamp[np.argmax(netsnr_timeseries)]
-    #trigger_time = timestamp[np.argmax(abs(snr_timeseries_dict['L1']))]
-
     # Save event info
     # trigger_time, ndet,    detcode1, ..., detcodeN,    max_snr1, ..., max_snrN,    sigma1, ..., sigmaN
     # 1+1+N+N+N = 3N+2 elements
@@ -71,12 +62,13 @@ def main(xml: str, out: str = "data"):
     event_info = np.append(event_info, sigma_array)
     np.savetxt(out_path / 'event_info', event_info)
 
-
-    # Save SNR
+    # Save SNR series for each detector
     for det in det_names:
-        snr_to_save = np.array([timestamps[det], np.real(xmlfile['snrs'][det]), 1*np.imag(xmlfile['snrs'][det])]).T 
+        timestamps = xmlfile["snrs"][det].index.values
+        real_snr = np.real(xmlfile['snrs'][det])
+        imag_snr = np.imag(xmlfile['snrs'][det])
+        snr_to_save = np.array([timestamps[det], real_snr, imag_snr]).T 
         np.savetxt(out_path / "snr_data" / f"snr_det{lal_det_code[det]}", snr_to_save)
-
 
     print(f'Trigger time: {trigger_time}')
     print(f'Detectors: {det_names}')
