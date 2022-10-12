@@ -1,18 +1,10 @@
-# source /fred/oz016/qian/spiirenv/bin/activate
-
-# Targets:
-# 1. Read .xml file
-# 2. Store SNR, sigma as txt files
-
-# The process may be faster if we do the above in C code. 
-
 from pathlib import Path
 
 import click
 import numpy as np
-import spiir  # quite slow to import?
+import spiir
 
-# Here detector code is for old version of LAL(6.49.0), see:
+# Here is the detector code for the old version of LAL(6.49.0), see:
 # /fred/oz016/opt-pipe/include/lal/LALDetectors.h
 # Be careful when chenge to new version - the code is different, see:
 # https://lscsoft.docs.ligo.org/lalsuite/lal/_l_a_l_detectors_8h_source.html#l00168
@@ -23,6 +15,7 @@ LAL_IFO_MAP = {'L1': 5, 'H1': 4, 'V1':1, 'K1': 16, 'I1': 17}
 @click.argument("xml", type=str) # default="data/coinc_xml/H1L1V1_1187008882_3_806.xml"
 @click.option("--out", type=str, default="data", help="Output data directory")
 def main(xml: str, out: str = "data"):
+    """Reads in a SPIIR coinc.xml file and writes data (SNR, sigma) to .txt files."""
     print(f'Processing coinc.xml file from {xml}...')
     xmlfile = spiir.io.ligolw.coinc.load_coinc_xml(xml)
     
@@ -41,8 +34,8 @@ def main(xml: str, out: str = "data"):
     ndet = len(det_names)
 
     # Calculate sigma = sqrt((h|h)) = deff/SNR
-    deff_array = np.array([])
-    max_snr_array = np.array([])
+    deff_array = []
+    max_snr_array = []
     for det in det_names:
         deff_array = np.append(deff_array, xmlfile['tables']['postcoh']['deff_'+det])
         max_snr_array = np.append(max_snr_array, xmlfile['tables']['postcoh']['snglsnr_'+det])
@@ -54,12 +47,12 @@ def main(xml: str, out: str = "data"):
     # Save event info
     # trigger_time, ndet,    detcode1, ..., detcodeN,    max_snr1, ..., max_snrN,    sigma1, ..., sigmaN
     # 1+1+N+N+N = 3N+2 elements
-    event_info = np.array([trigger_time, ndet])
+    event_info = [trigger_time, ndet]
     for det in det_names:
-        event_info = np.append(event_info, LAL_IFO_MAP[det])
-    event_info = np.append(event_info, max_snr_array)
-    event_info = np.append(event_info, sigma_array)
-    np.savetxt(out_path / 'event_info', event_info)
+        event_info.append(LAL_IFO_MAP[det])
+    event_info.append(max_snr_array)
+    event_info.append(sigma_array)
+    np.savetxt(out_path / 'event_info', np.array(event_info))
 
     # Save SNR series for each detector
     for det in det_names:
