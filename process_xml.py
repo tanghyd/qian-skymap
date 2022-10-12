@@ -30,21 +30,19 @@ def main(xml: str, out: str = "data"):
         raise KeyError(
             f"snr array data not present {xml} file. Please check your coinc.xml!"
         ) from err
-    
-    ndet = len(ifos)
 
     # Calculate sigma = sqrt((h|h)) = deff/SNR
-    deff_array = np.array([xmlfile['tables']['postcoh'][f"deff_{ifo}"] for ifo in ifos])
-    max_snr_array = np.array([xmlfile['tables']['postcoh'][f"snglsnr_{ifo}"] for ifo in ifos])
+    postcoh = xmlfile["tables"]["postcoh"]
+    deff_array = np.array([postcoh[f"deff_{ifo}"] for ifo in ifos])
+    max_snr_array = np.array([postcoh[f"snglsnr_{ifo}"] for ifo in ifos])
     sigma_array = deff_array*max_snr_array
 
-    trigger_time = xmlfile["tables"]["postcoh"]["end_time"].item()
-    trigger_time += xmlfile["tables"]["postcoh"]["end_time_ns"].item() * 1e-9
+    trigger_time = postcoh["end_time"].item() + postcoh["end_time_ns"].item() * 1e-9
 
     # Save event info
-    # trigger_time, ndet,    detcode1, ..., detcodeN,    max_snr1, ..., max_snrN,    sigma1, ..., sigmaN
+    # trigger_time, ndet, det1, ..., detN, max_snr1, ..., max_snrN, sigma1, ..., sigmaN
     # 1+1+N+N+N = 3N+2 elements
-    event_info = [trigger_time, ndet]
+    event_info = [trigger_time, len(ifos)]
     for ifo in ifos:
         event_info.append(LAL_IFO_MAP[ifo])
     event_info.append(max_snr_array)
