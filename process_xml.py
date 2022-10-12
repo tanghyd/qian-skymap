@@ -34,12 +34,16 @@ def main(path: str):
         max_snr_array = np.append(max_snr_array, xmlfile['tables']['postcoh']['snglsnr_'+det])
     sigma_array = deff_array*max_snr_array
 
+    trigger_time = xmlfile["tables"]["postcoh"]["end_time"].item()
+    trigger_time += xmlfile["tables"]["postcoh"]["end_time_ns"].item() * 1e-9
 
-    # Is trigger time stored in xml file? 
-    timestamp = xmlfile['snrs'][det].index.to_numpy()
-    snr_timeseries_dict = xmlfile['snrs']
-    netsnr_timeseries = sum([abs(snr_timeseries_dict[det]) ** 2 for det in det_names])
-    trigger_time = timestamp[np.argmax(netsnr_timeseries)]
+    # Is trigger time stored in xml file?
+    timestamps = {det: xmlfile["snrs"][det].index.values for det in det_names}
+    # timestamp = xmlfile['snrs'][det].index.to_numpy()
+    # snr_timeseries_dict = xmlfile['snrs']
+    # netsnr_timeseries = sum([abs(snr_timeseries_dict[det]) ** 2 for det in det_names])
+    
+    # trigger_time = timestamp[np.argmax(netsnr_timeseries)]
     #trigger_time = timestamp[np.argmax(abs(snr_timeseries_dict['L1']))]
 
     # Save event info
@@ -62,7 +66,7 @@ def main(path: str):
 
     # Save SNR
     for det in det_names:
-        snr_to_save = np.array([timestamp, np.real(snr_timeseries_dict[det]), 1*np.imag(snr_timeseries_dict[det])]).T 
+        snr_to_save = np.array([timestamps[det], np.real(xmlfile['snrs'][det]), 1*np.imag(xmlfile['snrs'][det])]).T 
         np.savetxt(f'data/snr_data/snr_det{lal_det_code[det]}', snr_to_save)
 
 
