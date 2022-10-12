@@ -42,26 +42,34 @@ def main(xml: str, out: str = "data"):
     # Save event info
     # trigger_time, ndet, det1, ..., detN, max_snr1, ..., max_snrN, sigma1, ..., sigmaN
     # 1+1+N+N+N = 3N+2 elements
-    event_info = [trigger_time, len(ifos)]
-    for ifo in ifos:
-        event_info.append(LAL_IFO_MAP[ifo])
-    event_info.append(max_snr_array)
-    event_info.append(sigma_array)
-    np.savetxt(out_path / 'event_info', np.array(event_info))
+    with (out_path / "event_info").open(mode="w") as f:
+        f.write(str(trigger_time) + "\n")
+        f.write(str(len(ifos)) + "\n")
+        for ifo in ifos:
+            f.write(str(LAL_IFO_MAP[ifo]) + "\n")
+        for max_snr in max_snr_array:
+            f.write(str(max_snr.item()) + "\n")
+        for sigma in sigma_array:
+            f.write(str(sigma.item()) + "\n")
+        # for i, sigma in enumerate(sigma_array):
+        #     f.write(str(sigma.item()))
+            # if i != len(sigma_array) - 1:
+            #     # if we don't want to end the file with new line
+            #     f.write("\n")
 
     # Save SNR series for each detector
     for ifo in ifos:
         timestamps = xmlfile["snrs"][ifo].index.values
         real_snr = np.real(xmlfile['snrs'][ifo])
         imag_snr = np.imag(xmlfile['snrs'][ifo])
-        snr_to_save = np.array([timestamps[ifo], real_snr, imag_snr]).T 
+        snr_to_save = np.array([timestamps, real_snr, imag_snr]).T 
         np.savetxt(out_path / "snr_data" / f"snr_det{LAL_IFO_MAP[ifo]}", snr_to_save)
 
     print(f'Trigger time: {trigger_time}')
     print(f'Detectors: {ifos}')
     print(f'SNRs: {max_snr_array}')
     print(f'sigmas: {sigma_array}')
-    print('SNR and event info have been saved. \n')
+    print(f'SNR and event info have been saved to {out}. \n')
 
 if __name__ == "__main__":
     main()
