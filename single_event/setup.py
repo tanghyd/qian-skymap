@@ -17,7 +17,11 @@ sealcore = Extension(name = "sealcore",
                   extra_link_args=['-fopenmp', '-O3']
                   )
 
-setup(ext_modules=cythonize([sealcore]))
+setup(
+    name="sealgw",
+    ext_modules=cythonize([sealcore]),
+    version="0.0.1",
+)
 
 #rm -r build/ *.so
 #python setup.py build_ext --inplace
